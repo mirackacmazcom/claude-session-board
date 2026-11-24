@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Session Board</title>
+<style>
+:root{
+  --bg:#f6f7f9; --bg2:#eef0f3; --panel:#ffffff; --col:#eceef2; --card:#ffffff; --card-h:#fbfbfc;
+  --line:#e2e5ea; --line2:#d3d8df; --text:#1b1f24; --text2:#4d5562; --text3:#8a93a1;
+  --accent:#d97757; --accent2:#c4623f; --accent-soft:#f6e3db;
+  --shadow:0 1px 1px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.08);
+  --shadow-h:0 4px 10px rgba(16,24,40,.08),0 2px 4px rgba(16,24,40,.06);
+  --shadow-lg:0 24px 60px rgba(16,24,40,.22),0 4px 14px rgba(16,24,40,.10);
+  --r:10px; --r-sm:7px;
+  --s-tekrar:#e5484d; --s-karar:#f5a524; --s-kontrol:#3e8ef7; --s-devam:#d97757; --s-yapilacak:#8b95a5; --s-bitti:#30a46c;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15171a; --bg2:#1b1e22; --panel:#1d2024; --col:#1c1f23; --card:#25292e; --card-h:#2a2f35;
+  --line:#2c3137; --line2:#383e46; --text:#eceef1; --text2:#b3bac4; --text3:#7d8692;
+  --accent:#e08a6b; --accent2:#eb9b7e; --accent-soft:#3a2a24;
+  --shadow:0 1px 0 rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.35);
+  --shadow-h:0 6px 16px rgba(0,0,0,.35),0 2px 4px rgba(0,0,0,.3);
+  --shadow-lg:0 30px 80px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#15171a; --bg2:#1b1e22; --panel:#1d2024; --col:#1c1f23; --card:#25292e; --card-h:#2a2f35;
+  --line:#2c3137; --line2:#383e46; --text:#eceef1; --text2:#b3bac4; --text3:#7d8692;
+  --accent:#e08a6b; --accent2:#eb9b7e; --accent-soft:#3a2a24;
+  --shadow:0 1px 0 rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.35);
+  --shadow-h:0 6px 16px rgba(0,0,0,.35),0 2px 4px rgba(0,0,0,.3);
+  --shadow-lg:0 30px 80px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+input,textarea,select{font:inherit;color:inherit}
+.tab-num,.num{font-variant-numeric:tabular-nums}
+
+/* ── top bar ── */
+.top{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;letter-spacing:-.01em;font-size:15px;white-space:nowrap}
+.brand i{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#b8563a);display:grid;place-items:center;color:#fff;font-style:normal;font-size:12px;box-shadow:0 2px 6px rgba(217,119,87,.35)}
+.seg{display:flex;background:var(--bg2);border-radius:9px;padding:3px;gap:2px}
+.seg button{padding:5px 12px;border-radius:7px;color:var(--text2);font-weight:520;font-size:13px;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+.seg .pill{background:var(--s-karar);color:#1b1f24;border-radius:20px;font-size:11px;font-weight:700;padding:0 6px;line-height:17px}
+.search{flex:1;min-width:180px;max-width:420px;position:relative}
+.search input{width:100%;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--bg);padding:0 12px 0 32px;outline:none;transition:border-color .15s,box-shadow .15s}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.search svg{position:absolute;left:10px;top:9px;opacity:.5}
+.search kbd{position:absolute;right:8px;top:7px;font:11px ui-monospace,monospace;color:var(--text3);border:1px solid var(--line);border-radius:5px;padding:1px 5px;background:var(--panel)}
+.spacer{flex:1}
+.meta{color:var(--text3);font-size:12px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--s-bitti);box-shadow:0 0 0 3px color-mix(in srgb,var(--s-bitti) 25%,transparent)}
+.icon-btn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text2)}
+.icon-btn:hover{background:var(--bg2);color:var(--text)}
+
+/* ── project chips ── */
+.chips{display:flex;gap:6px;padding:12px 20px 0;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--text2);font-size:12.5px;font-weight:520;transition:all .12s}
+.chip:hover{border-color:var(--line2);color:var(--text)}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip b{width:8px;height:8px;border-radius:3px;display:inline-block}
+.chip .n{opacity:.6;font-weight:500}
+.chip[draggable]{cursor:grab}
+.chip.drop{border-color:var(--accent);background:var(--accent-soft);color:var(--text);transform:scale(1.06);box-shadow:0 0 0 3px var(--accent-soft)}
+.chip.moving{opacity:.35}
+.chip.add{border-style:dashed;color:var(--text3)}
+.chip.add:hover{color:var(--accent);border-color:var(--accent)}
+.chip-in{height:28px;border-radius:20px;border:1px solid var(--accent);background:var(--panel);padding:0 12px;outline:none;font-size:12.5px;width:170px;box-shadow:0 0 0 3px var(--accent-soft)}
+.chips .hintc{color:var(--text3);font-size:11.5px;margin-left:4px}
+body.carding .chips .hintc{color:var(--accent)}
+.p-sel{width:100%;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--panel);padding:0 8px}
+
+/* ── board ── */
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.board{flex:1;display:flex;gap:14px;padding:14px 20px 24px;overflow-x:auto;align-items:flex-start;scroll-behavior:smooth}
+.col{flex:0 0 288px;background:var(--col);border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 150px);border:1px solid transparent;transition:background .15s,border-color .15s}
+.col.over{background:color-mix(in srgb,var(--accent) 9%,var(--col));border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.col-h{display:flex;align-items:center;gap:8px;padding:12px 12px 8px 14px;font-weight:620;font-size:13px}
+.col-h .sd{width:9px;height:9px;border-radius:50%}
+.col-h .c{color:var(--text3);font-weight:500;margin-left:2px}
+.col-body{padding:2px 8px 8px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:44px}
+.col-empty{color:var(--text3);font-size:12.5px;text-align:center;padding:14px 8px;border:1.5px dashed var(--line2);border-radius:9px}
+.more{color:var(--text3);font-size:12.5px;padding:6px;border-radius:7px;text-align:left}
+.more:hover{background:var(--bg2);color:var(--text)}
+
+.card{background:var(--card);border-radius:var(--r);padding:10px 12px 9px;box-shadow:var(--shadow);cursor:grab;position:relative;border:1px solid var(--line);transition:box-shadow .15s,transform .15s,background .15s;user-select:none}
+.card:hover{box-shadow:var(--shadow-h);background:var(--card-h)}
+.card:active{cursor:grabbing}
+.card.dragging{opacity:.35;transform:rotate(1.5deg)}
+.card .bar{position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0}
+.lbls{display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap}
+.lbl{font-size:11px;font-weight:650;padding:1px 7px;border-radius:5px;color:#1b1f24;line-height:17px;letter-spacing:.01em}
+.card .t{font-size:13.5px;font-weight:520;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.card .f{display:flex;align-items:center;gap:10px;margin-top:8px;color:var(--text3);font-size:11.5px}
+.card .f .r{margin-left:auto}
+.badge{display:inline-flex;align-items:center;gap:4px}
+.badge.warn{color:#b7791f;background:color-mix(in srgb,var(--s-karar) 18%,transparent);padding:1px 6px;border-radius:5px;font-weight:600}
+.badge.ok{color:var(--s-bitti);font-weight:600}
+.card .go{position:absolute;right:8px;top:8px;opacity:0;transition:opacity .12s;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:2px 8px;font-size:11.5px;font-weight:600;color:var(--text2);box-shadow:var(--shadow)}
+.card:hover .go{opacity:1}
+.card .go:hover{color:var(--accent);border-color:var(--accent)}
+.placeholder{height:62px;border-radius:var(--r);border:2px dashed color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+
+/* all-chats sidebar */
+.pano{flex:1;display:flex;min-height:0}
+.pano .board{min-width:0}
+.slist{flex:0 0 290px;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);margin-top:14px;border-top-right-radius:12px;max-height:calc(100vh - 136px);position:sticky;top:0}
+.slist.shut{flex-basis:44px}
+.sl-h{display:flex;align-items:center;gap:8px;padding:12px 12px 8px 14px;font-weight:650;font-size:13px}
+.sl-h .c{color:var(--text3);font-weight:500}
+.sl-h .icon-btn{margin-left:auto;width:26px;height:26px;font-size:13px}
+.slist.shut .sl-h{flex-direction:column;padding:10px 8px}
+.slist.shut .sl-h .icon-btn{margin:0}
+.slist.shut .vt{writing-mode:vertical-rl;transform:rotate(180deg);color:var(--text2);font-size:12px;margin-top:6px}
+.sl-f{padding:0 10px 8px;display:flex;flex-direction:column;gap:6px}
+.sl-f input{height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:0 10px;outline:none;font-size:12.5px}
+.sl-f input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sl-tabs{display:flex;gap:2px;background:var(--bg2);border-radius:8px;padding:2px}
+.sl-tabs button{flex:1;font-size:11.5px;padding:3px 0;border-radius:6px;color:var(--text2);font-weight:560}
+.sl-tabs button.on{background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+.sl-body{overflow-y:auto;padding:0 6px 10px;flex:1}
+.sl-g{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 8px 4px}
+.si{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:grab;user-select:none}
+.si:hover{background:var(--bg2)}
+.si.dragging{opacity:.4}
+.si .d{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.si .tt{flex:1;min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si .pj{font-size:10.5px;font-weight:650;padding:0 6px;border-radius:4px;color:#1b1f24;line-height:16px;max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.si .ag{font-size:11px;color:var(--text3);flex-shrink:0;width:34px;text-align:right}
+.si.in{opacity:.5}
+.si .grip{color:var(--text3);opacity:0;font-size:11px;letter-spacing:-2px}
+.si:hover .grip{opacity:1}
+
+/* project checklist column */
+.col.pcol{background:var(--panel);border:1px solid var(--line)}
+.pcol .col-body{gap:2px}
+
+/* ── lists (inbox, projects) ── */
+.wrap{max-width:980px;margin:0 auto;padding:18px 20px 40px;width:100%}
+.h2{font-size:20px;font-weight:680;letter-spacing:-.02em;margin:6px 0 4px}
+.sub{color:var(--text3);margin:0 0 18px;font-size:13px}
+.ask{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);transition:opacity .25s,transform .25s}
+.ask.gone{opacity:0;transform:translateX(30px)}
+.ask .bx{margin-top:1px}
+.ask .body{flex:1;min-width:0}
+.ask .need{font-size:14px;font-weight:520;line-height:1.45}
+.ask .from{display:flex;gap:8px;align-items:center;margin-top:7px;color:var(--text3);font-size:12px}
+.ask .acts{display:flex;gap:6px;flex-shrink:0}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty .big{font-size:34px;margin-bottom:8px}
+
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.pcard .ph{display:flex;align-items:center;gap:10px}
+.pcard .ph .sw{width:12px;height:12px;border-radius:4px}
+.pcard .ph b{font-size:15px;font-weight:650;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:9px;padding:8px 10px}
+.stat .v{font-size:17px;font-weight:680;letter-spacing:-.01em}
+.stat .k{font-size:11px;color:var(--text3)}
+.pacts{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── buttons ── */
+.btn{height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-weight:560;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all .12s;color:var(--text)}
+.btn:hover{border-color:var(--line2);background:var(--bg2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--text2)}
+.btn.ghost:hover{background:var(--bg2);color:var(--text)}
+.btn.lg{height:38px;padding:0 16px;font-size:13.5px;border-radius:9px;width:100%;justify-content:center}
+
+/* checkbox */
+.bx{width:18px;height:18px;border-radius:5px;border:1.6px solid var(--line2);display:grid;place-items:center;flex-shrink:0;transition:all .12s;background:var(--panel)}
+.bx:hover{border-color:var(--accent)}
+.bx.on{background:var(--s-bitti);border-color:var(--s-bitti)}
+.bx.on::after{content:"";width:9px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+
+/* ── modal ── */
+.veil{position:fixed;inset:0;background:rgba(10,12,16,.45);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:20;overflow-y:auto}
+.veil.anim{animation:fade .15s ease}.veil.anim .modal{animation:pop .18s ease}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}}
+.modal{background:var(--panel);border-radius:16px;box-shadow:var(--shadow-lg);width:min(860px,100%);border:1px solid var(--line);overflow:hidden}
+.m-top{padding:22px 26px 6px;position:relative}
+.m-top .x{position:absolute;right:14px;top:14px}
+.m-title{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.25;margin:8px 40px 6px 0}
+.m-sub{color:var(--text3);font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.m-grid{display:grid;grid-template-columns:1fr 230px;gap:26px;padding:16px 26px 26px}
+@media (max-width:720px){.m-grid{grid-template-columns:1fr}}
+.sec{margin-bottom:22px}
+.sec-h{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.sec-h .c{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600;color:var(--text3)}
+.prose{color:var(--text2);line-height:1.55;font-size:13.5px}
+.msgs{display:flex;flex-direction:column;gap:8px}
+.msg{border-radius:10px;padding:9px 12px;border:1px solid var(--line);background:var(--bg)}
+.msg.user{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent);margin-left:36px}
+.msg.assistant{margin-right:36px}
+.msg .who{display:flex;gap:8px;align-items:center;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.msg.user .who{color:var(--accent2)}
+.msg .who span{font-weight:500;text-transform:none;letter-spacing:0}
+.msg .tx{font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--text)}
+.msg .tx.clip{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.msg .more2{margin-top:4px;font-size:12px;color:var(--accent2);font-weight:600}
+.msgs .wait{color:var(--text3);font-size:12.5px}
+.need-box{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:color-mix(in srgb,var(--s-karar) 11%,transparent);border:1px solid color-mix(in srgb,var(--s-karar) 35%,transparent)}
+.need-box.done{background:var(--bg);border-color:var(--line)}
+.need-box.done .tx{text-decoration:line-through;color:var(--text3)}
+.prog{height:6px;background:var(--bg2);border-radius:6px;overflow:hidden;margin-bottom:10px}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:6px;transition:width .3s ease}
+.prog.full i{background:var(--s-bitti)}
+.todo{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;margin:0 -8px;border-radius:8px}
+.todo:hover{background:var(--bg)}
+.todo .tx{flex:1;line-height:1.45;padding-top:0;word-break:break-word}
+.todo.done .tx{text-decoration:line-through;color:var(--text3)}
+.todo .del{opacity:0;color:var(--text3);font-size:12px;padding:0 4px}
+.todo:hover .del{opacity:1}
+.todo .del:hover{color:var(--s-tekrar)}
+.add{display:flex;gap:8px;margin-top:6px}
+.add input,.note-in{flex:1;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--bg);padding:0 11px;outline:none}
+.add input:focus,.note-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.note-in{height:auto;min-height:76px;padding:10px 11px;resize:vertical;width:100%;line-height:1.5;display:block}
+.compose{margin-top:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.compose:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.compose textarea{border:0;outline:none;background:transparent;width:100%;min-height:58px;padding:10px 12px;resize:vertical;line-height:1.5;display:block}
+.compose .bar2{display:flex;align-items:center;gap:10px;padding:6px 8px 6px 12px;border-top:1px solid var(--line);background:var(--bg)}
+.compose .st2{font-size:12px;color:var(--text3);flex:1}
+.compose .st2.ok{color:var(--s-bitti);font-weight:600}
+.compose .st2.bad{color:var(--s-tekrar)}
+.note{background:var(--bg);border-radius:10px;padding:10px 12px;margin-top:8px;position:relative}
+.note .when{font-size:11.5px;color:var(--text3);margin-top:4px;display:flex;gap:8px}
+.note .when button{color:var(--text3);opacity:0}
+.note:hover .when button{opacity:1}
+.note .when button:hover{color:var(--s-tekrar)}
+.hint{font-size:11.5px;color:var(--text3);margin-top:6px}
+.side .sl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px}
+.side .sl:first-child{margin-top:0}
+.st-list{display:flex;flex-direction:column;gap:3px}
+.st{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:8px;font-size:13px;color:var(--text2);text-align:left;font-weight:520}
+.st:hover{background:var(--bg2);color:var(--text)}
+.st.on{background:var(--bg2);color:var(--text);font-weight:650;box-shadow:inset 0 0 0 1px var(--line2)}
+.st i{width:9px;height:9px;border-radius:50%}
+.kv{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:var(--text2)}
+.kv b{font-weight:620;color:var(--text)}
+
+/* toast */
+.toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:40;align-items:center}
+.toast{background:#1b1f24;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;box-shadow:var(--shadow-lg);display:flex;gap:12px;align-items:center;animation:pop .18s ease}
+.toast button{color:#f0b49f;font-weight:650}
+.err{margin:14px 20px 0;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--s-tekrar) 12%,transparent);color:var(--s-tekrar);font-size:13px}
+.skeleton{padding:60px;text-align:center;color:var(--text3)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i>◆</i>Session Board</div>
+  <div class="seg" id="views"></div>
+  <label class="search">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5"/></svg>
+    <input id="q" placeholder="Search cards, notes, summaries" autocomplete="off">
+    <kbd>/</kbd>
+  </label>
+  <div class="spacer"></div>
+  <div class="meta" id="meta"></div>
+  <button class="icon-btn" id="theme" title="Theme">◐</button>
+</header>
+<div class="chips" id="chips"></div>
+<div id="err"></div>
+<main id="main"><div class="skeleton">Reading sessions…</div></main>
+<div class="toasts" id="toasts"></div>
+
+<script>
+(() => {
+'use strict'
+// ── token: from the URL fragment once, then out of the address bar ──
+let TOKEN = ''
+try {
+  const m = location.hash.match(/t=([\w-]+)/)
+  const c = location.hash.match(/card=([\w-]+)/), v = location.hash.match(/view=(\w+)/)
+  if (c) sessionStorage.setItem('op-card', c[1])
+  if (v) localStorage.setItem('op-view', v[1])
+  if (m) { TOKEN = m[1]; sessionStorage.setItem('op-t', TOKEN); history.replaceState(null, '', location.pathname) }
+  else TOKEN = sessionStorage.getItem('op-t') || ''
+} catch {}
+
+const DAY = 864e5
+const ST = [
+  { k: 'yapilacak', l: 'To do' },
+  { k: 'devam', l: 'In progress' },
+  { k: 'karar', l: 'Needs decision' },
+  { k: 'kontrol', l: 'To check' },
+  { k: 'tekrar', l: 'Redo' },
+  { k: 'bitti', l: 'Done' },
+]
+const SL = Object.fromEntries(ST.map(s => [s.k, s.l]))
+const LABELS = ['#4bce97', '#e2b203', '#faa53d', '#f87168', '#9f8fef', '#579dff', '#6cc3e0', '#94c748']
+const labelOf = n => LABELS[[...n].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % LABELS.length]
+
+const S = {
+  sessions: [], marks: {}, projects: [], now: Date.now(), rev: -1,
+  msgs: {}, msgOpen: new Set(), draft: {}, sendState: {}, view: pref('view', 'pano'), proj: pref('proj', ''), side: pref('side', 'open'), sideTab: 'all', sq: '', q: '', open: null, more: {}, err: '', loaded: false,
+}
+function pref(k, d) { try { return localStorage.getItem('op-' + k) ?? d } catch { return d } }
+function save(k, v) { try { localStorage.setItem('op-' + k, v) } catch {} }
+
+// ── tiny DOM helper: h('div.cls', {attrs}, ...children) ──
+function h(tag, props, ...kids) {
+  const [t, ...cls] = tag.split('.')
+  const el = document.createElement(t || 'div')
+  if (cls.length) el.className = cls.join(' ')
+  if (props) for (const [k, v] of Object.entries(props)) {
+    if (v == null || v === false) continue
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v)
+    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v)
+    else if (k === 'text') el.textContent = v
+    else el.setAttribute(k, v === true ? '' : v)
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)))
+  return el
+}
+
+// ── data ──
+async function api(path, body) {
+  const r = await fetch(path, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'X-Token': TOKEN, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  const d = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status))
+  return d
+}
+let busy = 0, dragging = false
+async function load() {
+  if (busy || dragging) return
+  try {
+    const d = await api('/api/state')
+    const changed = d.rev !== S.rev || JSON.stringify(d.sessions.map(s => [s.id, s.last, s.needs, s.title])) !== JSON.stringify(S.sessions.map(s => [s.id, s.last, s.needs, s.title]))
+    Object.assign(S, { sessions: d.sessions, marks: d.marks, projects: d.projects ?? [], rev: d.rev, now: d.now, err: '', loaded: true })
+    if (changed) render()
+    else renderMeta()
+    const want = sessionStorage.getItem('op-card')
+    if (want) { sessionStorage.removeItem('op-card'); if (S.sessions.some(x => x.id === want)) openCard(want) }
+  } catch (e) {
+    S.err = TOKEN ? 'Cannot reach the server: ' + e.message : 'No access key. Open the board from the Claude Code side panel with “Open full board”.'
+    renderErr()
+  }
+}
+async function mark(ops, toast) {
+  busy++
+  // optimistic: apply locally the same way the server will
+  for (const op of ops) applyLocal(op)
+  render()
+  try {
+    const d = await api('/api/mark', { ops })
+    S.marks = d.marks; S.rev = d.rev; S.projects = d.projects ?? S.projects
+    if (toast) say(toast.text, toast.undo)
+  } catch (e) { say('Could not save: ' + e.message) }
+  finally { busy--; render() }
+}
+function applyLocal(op) {
+  if (op.op === 'proj.add') { if (!S.projects.includes(op.name)) S.projects.push(op.name); return }
+  if (op.op === 'proj.order') { S.projects = [...new Set([...op.names, ...S.projects])]; return }
+  if (op.op === 'proj.rename') {
+    S.projects = S.projects.filter(n => n !== op.to).map(n => n === op.from ? op.to : n)
+    if (!S.projects.includes(op.to)) S.projects.push(op.to)
+    for (const m of Object.values(S.marks)) if (m.project === op.from) m.project = op.to
+    const a = S.marks['proj:' + op.from]
+    if (a) { const b = S.marks['proj:' + op.to] ??= { notes: [] }; b.todos = [...(b.todos ?? []), ...(a.todos ?? [])]; b.notes = [...(b.notes ?? []), ...(a.notes ?? [])]; delete S.marks['proj:' + op.from] }
+    return
+  }
+  if (op.op === 'proj.del') { S.projects = S.projects.filter(n => n !== op.name); for (const m of Object.values(S.marks)) if (m.project === op.name) delete m.project; return }
+  const m = S.marks[op.id] ??= { notes: [] }
+  m.notes ??= []
+  if (op.op === 'status') op.value ? (m.status = op.value) : delete m.status
+  else if (op.op === 'project') op.value ? (m.project = op.value) : delete m.project
+  else if (op.op === 'handled') op.value ? (m.handled = op.value) : delete m.handled
+  else if (op.op === 'todo.add') (m.todos ??= []).push({ t: op.t, at: op.at, done: false })
+  else if (op.op === 'note.add') m.notes.push({ t: op.t, at: op.at })
+  else if (op.op === 'todo.flip') for (const x of m.todos ?? []) { if (x.at === op.at) x.done = !x.done }
+  else if (op.op === 'todo.del') m.todos = (m.todos ?? []).filter(x => x.at !== op.at)
+  else if (op.op === 'note.del') m.notes = m.notes.filter(x => x.at !== op.at)
+}
+async function openSession(id) {
+  try { await api('/api/open', { id }); say('Opening the session in the Claude app') } catch (e) { say('Could not open: ' + e.message) }
+}
+
+// ── derived ──
+const statusOf = r => { const v = S.marks[r.id]?.status; return v && SL[v] ? v : r.auto }
+const waits = r => !!r.needs && S.marks[r.id]?.handled !== r.needs
+const isOpen = r => statusOf(r) !== 'bitti' && (!!S.marks[r.id]?.status || r.pinned || S.now - r.last < 7 * DAY)
+const short = t => t.replace(/\s*\([^)]*\)\s*$/, '')
+const prog = l => (l?.length ? [l.filter(x => x.done).length, l.length] : null)
+function ago(ms) {
+  const m = Math.round((S.now - ms) / 6e4)
+  if (m < 1) return 'now'; if (m < 60) return m + 'm'
+  const h = Math.round(m / 60); if (h < 24) return h + 'h'
+  const d = Math.round(h / 24); return d === 1 ? 'yesterday' : d + 'd'
+}
+function fmt(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B'
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
+  if (n >= 1e3) return Math.round(n / 1e3) + 'K'
+  return String(n)
+}
+function hit(r) {
+  const q = S.q.trim().toLocaleLowerCase(); if (!q) return true
+  const m = S.marks[r.id]
+  return [r.title, r.summary, r.needs, r.project, ...(m?.notes ?? []).map(n => n.t), ...(m?.todos ?? []).map(n => n.t)]
+    .join(' ').toLocaleLowerCase().includes(q)
+}
+const inProj = r => !S.proj || r.project === S.proj
+// A session belongs to a project only when the person put it there.
+function fixProj() { for (const r of S.sessions) r.project = S.marks[r.id]?.project || '' }
+const projects = () => {
+  const by = Object.fromEntries(S.projects.map(n => [n, []]))
+  for (const r of S.sessions) if (r.project) (by[r.project] ??= []).push(r)
+  const rank = n => { const i = S.projects.indexOf(n); return i < 0 ? 1e9 : i }
+  return Object.entries(by).map(([name, list]) => ({ name, list, own: S.projects.includes(name), last: list.length ? Math.max(...list.map(r => r.last)) : 0 }))
+    .sort((a, b) => rank(a.name) - rank(b.name) || b.last - a.last)
+}
+function moveTo(id, name) {
+  const r = S.sessions.find(x => x.id === id); if (!r || r.project === name) return
+  const prev = S.marks[id]?.project ?? null
+  const ops = [{ op: 'project', id, value: name || null }]
+  if (name && !S.projects.includes(name)) ops.push({ op: 'proj.add', id: '*', name })
+  mark(ops, { text: `“${short(r.title)}” → ${name || 'No project'}`, undo: () => mark([{ op: 'project', id, value: prev }]) })
+}
+
+// ── UI pieces ──
+const Label = name => h('span.lbl', { style: { background: labelOf(name) } }, name)
+const Box = (on, onclick, title) => h('button.bx' + (on ? '.on' : ''), { onclick, title, 'aria-pressed': on ? 'true' : 'false' })
+function say(text, undo) {
+  const t = h('div.toast', null, text, undo ? h('button', { onclick: () => { undo(); t.remove() } }, 'Undo') : null)
+  document.getElementById('toasts').append(t)
+  setTimeout(() => t.remove(), undo ? 5000 : 2600)
+}
+const now = () => Date.now()
+
+function dragSession(el, id) {
+  el.addEventListener('dragstart', e => {
+    dragging = true; e.dataTransfer.setData('text/plain', id); e.dataTransfer.setData('application/x-card', id); e.dataTransfer.effectAllowed = 'move'
+    document.body.classList.add('carding'); requestAnimationFrame(() => el.classList.add('dragging'))
+  })
+  el.addEventListener('dragend', () => {
+    dragging = false; el.classList.remove('dragging'); document.body.classList.remove('carding')
+    document.querySelectorAll('.placeholder').forEach(x => x.remove()); document.querySelectorAll('.col.over,.chip.drop').forEach(x => x.classList.remove('over', 'drop'))
+  })
+  return el
+}
+
+// Every chat in one list, to drag onto a column or a project chip.
+function Sidebar() {
+  if (S.side === 'shut') return h('aside.slist.shut', null, h('div.sl-h', null,
+    h('button.icon-btn', { onclick: () => { S.side = 'open'; save('side', 'open'); render() }, title: 'Show the chat list' }, '»'), h('span.vt', null, `All chats · ${S.sessions.length}`)))
+  const filt = h('input#sq', { placeholder: 'Search chats', value: S.sq })
+  const body = h('div.sl-body')
+  const fill = () => {
+    const q = S.sq.trim().toLocaleLowerCase()
+    let list = S.sessions.filter(r => !q || (r.title + ' ' + r.project).toLocaleLowerCase().includes(q))
+    if (S.sideTab === 'other' && S.proj) list = list.filter(r => r.project !== S.proj)
+    if (S.sideTab === 'none') list = list.filter(r => !r.project)
+    list = [...list].sort((a, b) => b.last - a.last)
+    const groups = [['Today', r => S.now - r.last < DAY], ['This week', r => S.now - r.last < 7 * DAY], ['This month', r => S.now - r.last < 30 * DAY], ['Older', () => true]]
+    const seen = new Set(), out = []
+    for (const [g, f] of groups) {
+      const part = list.filter(r => !seen.has(r.id) && f(r)); part.forEach(r => seen.add(r.id))
+      if (!part.length) continue
+      out.push(h('div.sl-g', null, g), ...part.map(r => {
+        const st = statusOf(r)
+        return dragSession(h('div.si' + (S.proj && r.project === S.proj ? '.in' : ''), { draggable: 'true', title: `${r.title}\nDrag onto a column or a project chip · Click to open the card`, onclick: () => openCard(r.id) },
+          h('span.grip', null, '⋮⋮'), h('span.d', { style: { background: `var(--s-${st})` } }), h('span.tt', null, short(r.title)),
+          r.project ? h('span.pj', { style: { background: labelOf(r.project) } }, r.project) : null, h('span.ag.num', null, ago(r.last))), r.id)
+      }))
+    }
+    body.replaceChildren(...(out.length ? out : [h('div.col-empty', { style: { margin: '8px' } }, 'No chats')]))
+  }
+  filt.addEventListener('input', () => { S.sq = filt.value; fill() })
+  const tabs = [['all', 'All'], ...(S.proj ? [['other', 'Not in this project']] : []), ['none', 'No project']]
+  if (!tabs.some(t => t[0] === S.sideTab)) S.sideTab = 'all'
+  fill()
+  return h('aside.slist', null,
+    h('div.sl-h', null, 'All chats', h('span.c.num', null, S.sessions.length),
+      h('button.icon-btn', { onclick: () => { S.side = 'shut'; save('side', 'shut'); render() }, title: 'Collapse the list' }, '«')),
+    h('div.sl-f', null, filt, h('div.sl-tabs', null, tabs.map(([k, l]) => h('button' + (S.sideTab === k ? '.on' : ''), { onclick: () => { S.sideTab = k; render() } }, l)))),
+    body)
+}
+
+function Card(r) {
+  const m = S.marks[r.id], st = statusOf(r), p = prog(m?.todos), n = m?.notes?.length ?? 0
+  const el = h('div.card', { draggable: 'true', 'data-id': r.id, onclick: e => { if (!e.target.closest('.go')) openCard(r.id) } },
+    h('span.bar', { style: { background: `var(--s-${st})` } }),
+    S.proj || !r.project ? null : h('div.lbls', null, Label(r.project)),
+    h('div.t', null, short(r.title)),
+    h('div.f', null,
+      waits(r) ? h('span.badge.warn', { title: r.needs }, '● seni bekliyor') : null,
+      p ? h('span.badge' + (p[0] === p[1] ? '.ok' : ''), { title: 'Checklist' }, `☑ ${p[0]}/${p[1]}`) : null,
+      n ? h('span.badge', { title: 'Notes' }, `✎ ${n}`) : null,
+      h('span.r.num', { title: new Date(r.last).toLocaleString('en-US') }, ago(r.last))),
+    h('button.go', { onclick: e => { e.stopPropagation(); openSession(r.id) }, title: 'Open in the Claude app' }, 'Open ↗'))
+  return dragSession(el, r.id)
+}
+
+function Column(s, list) {
+  const lim = S.more[s.k] ? 500 : 12
+  const body = h('div.col-body', null,
+    list.length ? list.slice(0, lim).map(Card) : h('div.col-empty', null, 'Drag a card here'),
+    list.length > lim ? h('button.more', { onclick: () => { S.more[s.k] = true; render() } }, `+ ${list.length - lim} kart daha`) : null)
+  const col = h('section.col', { 'data-k': s.k },
+    h('div.col-h', null, h('span.sd', { style: { background: `var(--s-${s.k})` } }), s.l, h('span.c.num', null, list.length)), body)
+  col.addEventListener('dragover', e => {
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move'
+    document.querySelectorAll('.col.over').forEach(x => x !== col && x.classList.remove('over'))
+    col.classList.add('over')
+    let ph = body.querySelector('.placeholder')
+    if (!ph) { document.querySelectorAll('.placeholder').forEach(x => x.remove()); ph = h('div.placeholder') }
+    const after = [...body.querySelectorAll('.card:not(.dragging)')].find(c => e.clientY < c.getBoundingClientRect().top + c.offsetHeight / 2)
+    after ? body.insertBefore(ph, after) : body.insertBefore(ph, body.querySelector('.more'))
+  })
+  col.addEventListener('dragleave', e => { if (!col.contains(e.relatedTarget)) { col.classList.remove('over'); body.querySelector('.placeholder')?.remove() } })
+  col.addEventListener('drop', e => {
+    e.preventDefault(); dragging = false
+    const id = e.dataTransfer.getData('text/plain'), r = S.sessions.find(x => x.id === id)
+    col.classList.remove('over')
+    if (!r) return render()
+    const ops = [], undo = [], into = S.proj && r.project !== S.proj
+    if (into) {
+      ops.push({ op: 'project', id, value: S.proj }); undo.push({ op: 'project', id, value: S.marks[id]?.project ?? null })
+      if (!S.projects.includes(S.proj)) ops.push({ op: 'proj.add', id: '*', name: S.proj })
+    }
+    if (statusOf(r) !== s.k) { ops.push({ op: 'status', id, value: s.k }); undo.push({ op: 'status', id, value: S.marks[id]?.status ?? null }) }
+    if (!ops.length) return render()
+    mark(ops, { text: `“${short(r.title)}” → ${into ? S.proj + ' · ' : ''}${s.l}`, undo: () => mark(undo) })
+  })
+  return col
+}
+
+function Checklist(key, opts = {}) {
+  const todos = S.marks[key]?.todos ?? [], p = prog(todos)
+  const input = h('input', { placeholder: opts.placeholder || 'Add an item and press Enter', maxlength: '500' })
+  const add = () => { const t = input.value.trim(); if (!t) return; input.value = ''; mark([{ op: 'todo.add', id: key, t, at: now() }]); setTimeout(() => document.querySelector(`[data-add="${CSS.escape(key)}"] input`)?.focus(), 0) }
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') add() })
+  return h('div', null,
+    p ? h('div.prog' + (p[0] === p[1] ? '.full' : ''), null, h('i', { style: { width: (100 * p[0] / p[1]) + '%' } })) : null,
+    todos.map(t => h('div.todo' + (t.done ? '.done' : ''), null,
+      Box(t.done, () => mark([{ op: 'todo.flip', id: key, at: t.at }])),
+      h('div.tx', null, t.t),
+      h('button.del', { onclick: () => mark([{ op: 'todo.del', id: key, at: t.at }], { text: 'Item deleted', undo: () => mark([{ op: 'todo.add', id: key, t: t.t, at: t.at }]) }) }, 'Delete'))),
+    h('div.add', { 'data-add': key }, input, h('button.btn', { onclick: add }, 'Add')))
+}
+
+function ProjectColumn() {
+  const key = 'proj:' + S.proj, p = prog(S.marks[key]?.todos)
+  return h('section.col.pcol', null,
+    h('div.col-h', null, h('span.sd', { style: { background: labelOf(S.proj), borderRadius: '3px' } }), 'Project checklist', h('span.c.num', null, p ? `${p[0]}/${p[1]}` : '')),
+    h('div.col-body', { style: { padding: '2px 14px 14px' } }, Checklist(key, { placeholder: 'Add a project item' })))
+}
+
+function Board() {
+  const rows = S.sessions.filter(r => inProj(r) && hit(r))
+  const by = Object.fromEntries(ST.map(s => [s.k, []]))
+  for (const r of rows) {
+    const st = statusOf(r)
+    if (st === 'bitti' ? S.now - r.last < 14 * DAY || !!S.marks[r.id]?.status : (st === 'devam' ? isOpen(r) || !!S.q : true)) by[st].push(r)
+  }
+  for (const k in by) by[k].sort((a, b) => b.last - a.last)
+  return h('div.pano', null, Sidebar(), h('div.board', null, S.proj ? ProjectColumn() : null, ST.map(s => Column(s, by[s.k]))))
+}
+
+function Inbox() {
+  const list = S.sessions.filter(r => waits(r) && inProj(r) && hit(r)).sort((a, b) => b.last - a.last)
+  return h('div.wrap', null,
+    h('div.h2', null, 'Waiting on me'),
+    h('p.sub', null, 'Manual steps Claude asked you to do. Tick what you did to keep the list clean.'),
+    list.length ? list.map(r => {
+      const row = h('div.ask', null,
+        Box(false, () => { row.classList.add('gone'); setTimeout(() => mark([{ op: 'handled', id: r.id, value: r.needs }], { text: 'Marked as done', undo: () => mark([{ op: 'handled', id: r.id, value: null }]) }), 220) }, 'Done'),
+        h('div.body', null,
+          h('div.need', null, r.needs),
+          h('div.from', null, r.project ? Label(r.project) : null, h('span', null, short(r.title)), h('span', null, '·'), h('span', null, ago(r.last) + ' ago'))),
+        h('div.acts', null,
+          h('button.btn.ghost', { onclick: () => openCard(r.id) }, 'Card'),
+          h('button.btn', { onclick: () => openSession(r.id) }, 'Go to session ↗')))
+      return row
+    }) : h('div.empty', null, h('div.big', null, '✓'), 'Nothing is waiting on you.'))
+}
+
+function report(name, days) {
+  const since = S.now - days * DAY
+  const mine = S.sessions.filter(r => r.project === name && r.last >= since).sort((a, b) => b.last - a.last)
+  const d = ms => new Date(ms).toLocaleDateString('en-US')
+  const line = r => `- **${short(r.title)}** (${d(r.last)})${r.summary ? ' — ' + r.summary : ''}` + (S.marks[r.id]?.notes ?? []).map(n => `\n  - Note: ${n.t}`).join('')
+  const part = (t, l) => l.length ? `\n## ${t}\n${l.map(line).join('\n')}\n` : ''
+  const asks = mine.filter(waits), todos = (S.marks['proj:' + name]?.todos ?? [])
+  return [`# ${name}: work report`, `${d(since)} – ${d(S.now)} · ${mine.length} work sessions`,
+    part('Completed', mine.filter(r => statusOf(r) === 'bitti')),
+    part('Being checked', mine.filter(r => statusOf(r) === 'kontrol')),
+    part('In progress', mine.filter(r => !['bitti', 'kontrol'].includes(statusOf(r)))),
+    todos.length ? `\n## Project checklist\n${todos.map(t => `- [${t.done ? 'x' : ' '}] ${t.t}`).join('\n')}\n` : '',
+    asks.length ? `\n## Pending steps\n${asks.map(r => `- ${r.needs}`).join('\n')}\n` : ''].join('\n')
+}
+async function copy(text, msg) {
+  try { await navigator.clipboard.writeText(text); say(msg) } catch { say('Could not copy to the clipboard') }
+}
+
+function Projects() {
+  const ps = projects().filter(p => !S.q || p.list.some(hit))
+  return h('div.wrap', { style: { maxWidth: '1200px' } },
+    h('div.h2', null, 'Projects'),
+    h('p.sub', null, 'Each project has its own board. Reports are copied to the clipboard as text you can send to a client.'),
+    h('div.pgrid', null, ps.map(p => {
+      const open = p.list.filter(isOpen).length, asks = p.list.filter(waits).length
+      const out = p.list.reduce((a, r) => a + (r.tokens?.out ?? 0), 0), pr = prog(S.marks['proj:' + p.name]?.todos)
+      return h('div.pcard', null,
+        h('div.ph', null, h('span.sw', { style: { background: labelOf(p.name) } }), h('b', null, p.name), h('span.meta', null, ago(p.last))),
+        h('div.stats', null,
+          h('div.stat', null, h('div.v.num', null, open), h('div.k', null, 'open')),
+          h('div.stat', null, h('div.v.num', { style: asks ? { color: '#b7791f' } : null }, asks), h('div.k', null, 'waiting on you')),
+          h('div.stat', null, h('div.v.num', null, fmt(out)), h('div.k', null, 'tokens written'))),
+        pr ? h('div', null, h('div.prog' + (pr[0] === pr[1] ? '.full' : ''), null, h('i', { style: { width: (100 * pr[0] / pr[1]) + '%' } })), h('div.hint', null, `Project checklist ${pr[0]}/${pr[1]}`)) : null,
+        h('div.pacts', null,
+          h('button.btn.pri', { onclick: () => { setProj(p.name); setView('pano') } }, 'Open board'),
+          h('button.btn', { onclick: () => copy(report(p.name, 7), 'Weekly report copied') }, 'Weekly report'),
+          h('button.btn.ghost', { onclick: () => copy(report(p.name, 30), 'Monthly report copied') }, 'Monthly')))
+    })))
+}
+
+// ── card modal ──
+function openCard(id) { S.open = id; S.msgOpen.clear(); renderModal(true); loadMsgs(id) }
+const loadingMsgs = new Set()
+async function loadMsgs(id) {
+  const r = S.sessions.find(x => x.id === id); if (!r) return
+  const have = S.msgs[id]
+  if ((have && have.last === r.last && !have.err) || loadingMsgs.has(id)) return
+  loadingMsgs.add(id)
+  try {
+    const d = await api('/api/msgs?id=' + encodeURIComponent(id))
+    S.msgs[id] = { last: r.last, list: d.msgs }
+  } catch (e) { S.msgs[id] = { last: r.last, list: [], err: e.message } }
+  finally { loadingMsgs.delete(id) }
+  if (S.open === id) render()
+}
+// Send a message into the session: the server queues it, a running Claude
+// Code session with this plugin delivers it, and the result comes back here.
+async function sendMsg(r) {
+  const text = (S.draft[r.id] || '').trim(); if (!text) return
+  S.sendState[r.id] = { s: 'wait', t: 'Sending…' }; renderModal()
+  try {
+    const { key } = await api('/api/send', { id: r.id, text })
+    for (let i = 0; i < 30; i++) {
+      await new Promise(ok => setTimeout(ok, 1000))
+      const d = await api('/api/sent?key=' + key)
+      if (d.pending) continue
+      if (d.ok) {
+        S.draft[r.id] = ''; S.sendState[r.id] = { s: 'ok', t: 'Delivered ✓ Claude’s reply will show up here.' }
+        for (const ms of [3000, 10000, 20000, 40000, 70000]) setTimeout(() => { if (S.msgs[r.id]) S.msgs[r.id].last = -1; loadMsgs(r.id) }, ms)
+      } else S.sendState[r.id] = { s: 'bad', t: d.reason || 'Not delivered' }
+      return renderModal()
+    }
+    S.sendState[r.id] = { s: 'bad', t: 'No answer; the message may not have been delivered.' }
+  } catch (e) { S.sendState[r.id] = { s: 'bad', t: 'Could not send: ' + e.message } }
+  renderModal()
+}
+function Compose(r) {
+  const st = S.sendState[r.id], busy = st?.s === 'wait'
+  const ta = h('textarea', { 'data-k': 'send', placeholder: 'Write to this chat… (⌘ Enter to send)', maxlength: '8000' })
+  ta.value = S.draft[r.id] || ''
+  ta.addEventListener('input', () => { S.draft[r.id] = ta.value; if (st && st.s !== 'wait') { delete S.sendState[r.id] } })
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); if (!busy) sendMsg(r) } })
+  return h('div.compose', null, ta, h('div.bar2', null,
+    h('span.st2' + (st?.s === 'ok' ? '.ok' : st?.s === 'bad' ? '.bad' : ''), null, st?.t || 'Delivered right away if the session is open in the Claude app.'),
+    h('button.btn.pri', { onclick: () => sendMsg(r), disabled: busy ? true : null }, busy ? 'Sending…' : 'Send')))
+}
+function Msgs(r) {
+  const m = S.msgs[r.id]
+  if (!m) return h('div.msgs', null, h('div.wait', null, 'Reading messages…'))
+  if (m.err) return h('div.msgs', null, h('div.wait', null, 'Could not read messages: ' + m.err))
+  if (!m.list.length) return h('div.msgs', null, h('div.wait', null, 'No messages to show in this session.'))
+  return h('div.msgs', null, m.list.map((x, i) => {
+    const key = r.id + ':' + i + ':' + x.at, open = S.msgOpen.has(key), long = x.text.length > 320 || x.text.split('\n').length > 4
+    const when = x.at ? new Date(x.at).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''
+    return h('div.msg.' + (x.role === 'assistant' ? 'assistant' : 'user'), null,
+      h('div.who', null, x.role === 'assistant' ? 'Claude' : x.role === 'board' ? 'You · from board' : 'You', h('span', null, when)),
+      h('div.tx' + (long && !open ? '.clip' : ''), null, x.text),
+      long ? h('button.more2', { onclick: () => { open ? S.msgOpen.delete(key) : S.msgOpen.add(key); renderModal() } }, open ? 'Show less' : 'Show more') : null)
+  }))
+}
+function closeCard() { S.open = null; renderModal() }
+let lastSig = ''
+function modalSig() {
+  const r = S.sessions.find(x => x.id === S.open)
+  if (r) loadMsgs(r.id)
+  return JSON.stringify([S.open, r && [r.title, r.summary, r.needs, r.tokens, r.project], S.marks[S.open], statusOf(r || { auto: '' }), S.msgs[S.open], S.sendState[S.open]])
+}
+function renderModal(fresh) {
+  lastSig = S.open ? modalSig() : ''
+  const old = document.querySelector('.veil'), keep = old?.scrollTop ?? 0
+  old?.remove()
+  const r = S.open && S.sessions.find(x => x.id === S.open)
+  if (!r) return
+  const m = S.marks[r.id] ?? { notes: [] }, st = statusOf(r), t = r.tokens, done = m.handled === r.needs
+  const ta = h('textarea.note-in', { 'data-k': 'note', placeholder: 'What is left, what to watch out for? Claude sees this when you come back to the session.', maxlength: '1000' })
+  const addNote = () => { const v = ta.value.trim(); if (!v) return; ta.value = ''; mark([{ op: 'note.add', id: r.id, t: v, at: now() }]) }
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addNote() })
+  const veil = h('div.veil' + (fresh ? '.anim' : ''), { onclick: e => { if (e.target === veil) closeCard() } },
+    h('div.modal', { role: 'dialog', 'aria-modal': 'true' },
+      h('div.m-top', null,
+        h('button.icon-btn.x', { onclick: closeCard, title: 'Close (Esc)' }, '✕'),
+        h('div.lbls', null, r.project ? Label(r.project) : null, h('span.lbl', { style: { background: `var(--s-${st})`, color: '#fff' } }, SL[st])),
+        h('div.m-title', null, short(r.title)),
+        h('div.m-sub', null, `Last activity ${ago(r.last)} ago`, r.folder && !r.scratch ? h('span', null, '· ' + r.folder) : null)),
+      h('div.m-grid', null,
+        h('div', null,
+          r.summary ? h('div.sec', null, h('div.sec-h', null, 'Claude’s summary'), h('div.prose', null, r.summary)) : null,
+          h('div.sec', null, h('div.sec-h', null, 'Latest messages'), Msgs(r), Compose(r)),
+          r.needs ? h('div.sec', null, h('div.sec-h', null, 'Needs you', done ? h('span.c', null, 'done') : null),
+            h('div.need-box' + (done ? '.done' : ''), null, Box(done, () => mark([{ op: 'handled', id: r.id, value: done ? null : r.needs }])), h('div.tx', null, r.needs))) : null,
+          h('div.sec', null, h('div.sec-h', null, 'Checklist', (() => { const p = prog(m.todos); return p ? h('span.c.num', null, `${p[0]}/${p[1]}`) : null })()),
+            Checklist(r.id, { placeholder: 'Add an item for this chat' })),
+          h('div.sec', null, h('div.sec-h', null, 'Notes'),
+            ta, h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' } },
+              h('span.hint', { style: { margin: 0 } }, '⌘ Enter to save · Claude sees these notes'), h('button.btn', { onclick: addNote }, 'Save note')),
+            [...(m.notes ?? [])].reverse().map(n => h('div.note', null, h('div', null, n.t),
+              h('div.when', null, new Date(n.at).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+                h('button', { onclick: () => mark([{ op: 'note.del', id: r.id, at: n.at }], { text: 'Note deleted', undo: () => mark([{ op: 'note.add', id: r.id, t: n.t, at: n.at }]) }) }, 'Delete')))))),
+        h('aside.side', null,
+          h('button.btn.pri.lg', { onclick: () => openSession(r.id) }, 'Go to session ↗'),
+          h('div.sl', null, 'Project'),
+          (() => {
+            const sel = h('select.p-sel', { onchange: () => {
+              if (sel.value === '\u0000new') { const n = prompt('New project name'); n?.trim() ? moveTo(r.id, n.trim().slice(0, 60)) : renderModal(); return }
+              moveTo(r.id, sel.value)
+            } }, h('option', { value: '', selected: !r.project ? true : null }, 'No project'), projects().map(p => h('option', { value: p.name, selected: p.name === r.project ? true : null }, p.name)), h('option', { value: '\u0000new' }, '+ New project…'))
+            return sel
+          })(),
+          h('div.sl', null, 'List'),
+          h('div.st-list', null, ST.map(s => h('button.st' + (st === s.k ? '.on' : ''), { onclick: () => mark([{ op: 'status', id: r.id, value: s.k }]) }, h('i', { style: { background: `var(--s-${s.k})` } }), s.l))),
+          t ? h('div', null, h('div.sl', null, 'Token'),
+            h('div.kv', null, 'Written by Claude', h('b.num', null, fmt(t.out))),
+            h('div.kv', null, 'New input', h('b.num', null, fmt(t.in + t.cw))),
+            h('div.kv', null, 'From cache', h('b.num', null, fmt(t.cr)))) : null))))
+  document.body.append(veil)
+  if (!fresh) veil.scrollTop = keep
+}
+
+// ── project chips: click filters, drag to reorder, drop a card to move it, double-click to rename ──
+let chipEdit = null, chipDrag = null
+function chipInput(value, done) {
+  const inp = h('input.chip-in', { value, maxlength: '60', placeholder: 'Project name' })
+  let closed = false
+  const end = ok => { if (closed) return; closed = true; chipEdit = null; ok ? done(inp.value.trim()) : renderChips() }
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') end(true); else if (e.key === 'Escape') end(false) })
+  inp.addEventListener('blur', () => end(true))
+  setTimeout(() => { inp.focus(); inp.select() }, 0)
+  return inp
+}
+function Chip(p) {
+  const n = p.list.filter(isOpen).length
+  if (chipEdit === p.name) return chipInput(p.name, v => renameProj(p, v))
+  const el = h('button.chip' + (S.proj === p.name ? '.on' : ''), {
+    draggable: 'true', 'data-p': p.name, title: 'Click: filter · Drag: reorder · Double-click: rename · Drop a card here: move it to this project',
+    onclick: () => setProj(S.proj === p.name ? '' : p.name),
+    ondblclick: e => { e.preventDefault(); chipEdit = p.name; renderChips() },
+  }, h('b', { style: { background: labelOf(p.name) } }), p.name, h('span.n.num', null, n))
+  el.addEventListener('dragstart', e => { chipDrag = p.name; e.dataTransfer.setData('application/x-proj', p.name); e.dataTransfer.effectAllowed = 'move'; requestAnimationFrame(() => el.classList.add('moving')) })
+  el.addEventListener('dragend', () => { chipDrag = null; el.classList.remove('moving') })
+  el.addEventListener('dragover', e => {
+    const card = e.dataTransfer.types.includes('application/x-card')
+    if (!card && !chipDrag) return
+    e.preventDefault(); e.stopPropagation()
+    if (card) { el.classList.add('drop'); return }
+    if (chipDrag === p.name) return
+    const box = el.getBoundingClientRect(), before = e.clientX < box.left + box.width / 2
+    const src = document.querySelector(`.chip[data-p="${CSS.escape(chipDrag)}"]`)
+    if (src) el.parentNode.insertBefore(src, before ? el : el.nextSibling)
+  })
+  el.addEventListener('dragleave', () => el.classList.remove('drop'))
+  el.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation(); el.classList.remove('drop')
+    const id = e.dataTransfer.getData('application/x-card')
+    if (id) { dragging = false; document.body.classList.remove('carding'); return moveTo(id, p.name) }
+    if (chipDrag) saveOrder()
+  })
+  return el
+}
+function saveOrder() {
+  const names = [...document.querySelectorAll('#chips .chip[data-p]')].map(c => c.dataset.p)
+  mark([{ op: 'proj.order', id: '*', names }])
+}
+function renameProj(p, to) {
+  if (!to) { // empty name: remove the project; its sessions become Projesiz
+    const moved = p.list.filter(r => S.marks[r.id]?.project === p.name).map(r => r.id)
+    return mark([{ op: 'proj.del', id: '*', name: p.name }], { text: `“${p.name}” removed`, undo: () => mark([{ op: 'proj.add', id: '*', name: p.name }, ...moved.map(id => ({ op: 'project', id, value: p.name }))]) })
+  }
+  if (to === p.name) return renderChips()
+  const ops = [{ op: 'proj.rename', id: '*', from: p.name, to }]
+  const wasOn = S.proj === p.name
+  mark(ops, { text: `Project renamed: ${to}` })
+  if (wasOn) setProj(to)
+}
+function renderChips() {
+  const box = document.getElementById('chips')
+  if (S.view === 'proje') return box.replaceChildren()
+  // only the projects the person made; no guessed categories
+  const ps = projects()
+  box.replaceChildren(
+    h('button.chip' + (!S.proj ? '.on' : ''), { onclick: () => setProj('') }, 'All projects'),
+    ...ps.map(Chip),
+    chipEdit === '\u0000new' ? chipInput('', v => { if (v) mark([{ op: 'proj.add', id: '*', name: v.slice(0, 60) }], { text: `Project “${v}” added · drag cards onto it` }); else renderChips() })
+      : h('button.chip.add', { onclick: () => { chipEdit = '\u0000new'; renderChips() }, title: 'Add a project' }, '+ Project'),
+    h('span.hintc', null, ps.length ? 'Drag a chat from the list or the board onto a project chip' : 'No projects yet: create your own with “+ Project”'))
+}
+
+// ── shell ──
+function setView(v) { S.view = v; save('view', v); render() }
+function setProj(p) { S.proj = p; save('proj', p); render() }
+function renderMeta() {
+  document.getElementById('meta').replaceChildren(h('span.dot-live'), `${S.sessions.length} sessions · live`)
+}
+function renderErr() {
+  document.getElementById('err').replaceChildren(S.err ? h('div.err', null, S.err) : '')
+  if (!S.loaded && S.err) document.getElementById('main').replaceChildren(h('div.skeleton', null, '—'))
+}
+function render() {
+  if (!S.loaded) return renderErr()
+  fixProj()
+  if (S.proj && !S.projects.includes(S.proj)) S.proj = ''
+  const asks = S.sessions.filter(waits).length
+  document.getElementById('views').replaceChildren(...[['pano', 'Board'], ['inbox', 'Waiting on me', asks], ['proje', 'Projects']].map(([k, l, n]) =>
+    h('button' + (S.view === k ? '.on' : ''), { onclick: () => setView(k) }, l, n ? h('span.pill.num', null, n) : null)))
+  if (!chipEdit) renderChips()
+  renderMeta(); renderErr()
+  const scroll = document.querySelector('.board')?.scrollLeft ?? 0
+  const colScroll = Object.fromEntries([...document.querySelectorAll('.col[data-k]')].map(c => [c.dataset.k, c.querySelector('.col-body').scrollTop]))
+  const pageScroll = document.querySelector('.wrap')?.parentElement?.scrollTop ?? 0
+  const sideScroll = document.querySelector('.sl-body')?.scrollTop ?? 0, sqFocus = document.activeElement?.id === 'sq'
+  document.getElementById('main').replaceChildren(S.view === 'inbox' ? Inbox() : S.view === 'proje' ? Projects() : Board())
+  const b = document.querySelector('.board'); if (b) { b.style.scrollBehavior = 'auto'; b.scrollLeft = scroll; b.style.scrollBehavior = '' }
+  for (const c of document.querySelectorAll('.col[data-k]')) c.querySelector('.col-body').scrollTop = colScroll[c.dataset.k] ?? 0
+  void pageScroll
+  const sb = document.querySelector('.sl-body'); if (sb) sb.scrollTop = sideScroll
+  if (sqFocus) { const f = document.getElementById('sq'); f?.focus(); f?.setSelectionRange(f.value.length, f.value.length) }
+  if (S.open && modalSig() !== lastSig) {
+    // keep focus and typing in the modal across re-renders
+    const a = document.activeElement, v = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') ? [a.closest('[data-add]')?.dataset.add, a.tagName, a.value, a.dataset.k || 'note'] : null
+    renderModal()
+    if (v) { const el = v[0] ? document.querySelector(`.veil [data-add="${CSS.escape(v[0])}"] input`) : document.querySelector(`.veil textarea[data-k="${v[3]}"]`); if (el) { el.value = v[2]; el.focus() } }
+  }
+}
+
+const q = document.getElementById('q')
+q.addEventListener('input', () => { S.q = q.value; render() })
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && S.open) closeCard()
+  else if (e.key === '/' && document.activeElement !== q && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName)) { e.preventDefault(); q.focus() }
+})
+document.getElementById('theme').addEventListener('click', () => {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches
+  const cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light')
+  const next = cur === 'dark' ? 'light' : 'dark'
+  document.documentElement.dataset.theme = next; save('theme', next)
+})
+const th = pref('theme', ''); if (th) document.documentElement.dataset.theme = th
+
+load()
+setInterval(load, 4000)
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load() })
+})()
+</script>
+</body>
+</html>

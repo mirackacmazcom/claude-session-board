@@ -1,0 +1,11 @@
+{
+  "name": "session-board",
+  "version": "0.8.1",
+  "description": "A side pane and a full local board for your Claude Code desktop sessions: what waits on you, statuses, projects, notes, checklists, latest messages, tokens, and one-click jump into a session.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "mirackacmazcom"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/mirackacmazcom/claude-session-board"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "claude-session-board",
+  "description": "Session Board: a side pane and local board for Claude Code desktop sessions.",
+  "owner": {
+    "name": "mirackacmazcom"
+  },
+  "plugins": [
+    {
+      "name": "session-board",
+      "source": "./",
+      "description": "Side pane and local board for Claude desktop sessions: projects, notes, checklists, latest messages, send to session."
+    }
+  ]
+}
