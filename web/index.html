@@ -131,7 +131,7 @@ main{flex:1;min-height:0;display:flex;flex-direction:column}
 .si .d{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .si .tt{flex:1;min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .si .pj{font-size:10.5px;font-weight:650;padding:0 6px;border-radius:4px;color:#1b1f24;line-height:16px;max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
-.si .ag{font-size:11px;color:var(--text3);flex-shrink:0;width:34px;text-align:right}
+.si .ag{font-size:11px;color:var(--text3);flex-shrink:0;min-width:34px;text-align:right}
 .si.in{opacity:.5}
 .si .grip{color:var(--text3);opacity:0;font-size:11px;letter-spacing:-2px}
 .si:hover .grip{opacity:1}
@@ -297,8 +297,9 @@ const ST = [
   { k: 'bitti', l: 'Done' },
 ]
 const SL = Object.fromEntries(ST.map(s => [s.k, s.l]))
-const LABELS = ['#4bce97', '#e2b203', '#faa53d', '#f87168', '#9f8fef', '#579dff', '#6cc3e0', '#94c748']
-const labelOf = n => LABELS[[...n].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % LABELS.length]
+const LABELS = ['#faa53d', '#579dff', '#4bce97', '#9f8fef', '#f87168', '#6cc3e0', '#e2b203', '#94c748']
+// Each project the person made gets its own colour, in chip order; others fall back to a hash.
+const labelOf = n => { const i = S.projects.indexOf(n); return LABELS[i >= 0 ? i % LABELS.length : [...n].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % LABELS.length] }
 
 const S = {
   sessions: [], marks: {}, projects: [], now: Date.now(), rev: -1,
@@ -497,7 +498,7 @@ function Card(r) {
     S.proj || !r.project ? null : h('div.lbls', null, Label(r.project)),
     h('div.t', null, short(r.title)),
     h('div.f', null,
-      waits(r) ? h('span.badge.warn', { title: r.needs }, '● seni bekliyor') : null,
+      waits(r) ? h('span.badge.warn', { title: r.needs }, '● waiting on you') : null,
       p ? h('span.badge' + (p[0] === p[1] ? '.ok' : ''), { title: 'Checklist' }, `☑ ${p[0]}/${p[1]}`) : null,
       n ? h('span.badge', { title: 'Notes' }, `✎ ${n}`) : null,
       h('span.r.num', { title: new Date(r.last).toLocaleString('en-US') }, ago(r.last))),
@@ -792,7 +793,7 @@ function saveOrder() {
   mark([{ op: 'proj.order', id: '*', names }])
 }
 function renameProj(p, to) {
-  if (!to) { // empty name: remove the project; its sessions become Projesiz
+  if (!to) { // empty name: remove the project; its sessions get no project
     const moved = p.list.filter(r => S.marks[r.id]?.project === p.name).map(r => r.id)
     return mark([{ op: 'proj.del', id: '*', name: p.name }], { text: `“${p.name}” removed`, undo: () => mark([{ op: 'proj.add', id: '*', name: p.name }, ...moved.map(id => ({ op: 'project', id, value: p.name }))]) })
   }

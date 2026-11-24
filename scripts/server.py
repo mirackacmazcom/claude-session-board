@@ -18,7 +18,7 @@ import outbox  # noqa: E402
 import scan as scanner  # noqa: E402
 import store  # noqa: E402
 
-VERSION = "0.8.1"
+VERSION = "0.8.2"
 PORT = 47811
 WEB = os.path.join(os.path.dirname(HERE), "web", "index.html")
 ID = re.compile(r"^[A-Za-z0-9_-]{4,120}$")
