@@ -80,7 +80,7 @@ claude plugin install session-board --marketplace mirackacmazcom/claude-session-
 
 ## Use
 
-1. In any Claude Code session, type **`/board`**. The *Sessions* pane opens next to the chat.
+1. In any Claude Code session, type **`/board`**. The *Sessions* pane opens next to the chat (it only opens when you ask for it).
 2. Click **Open full board ↗** to open the board in your browser.
 3. Click **+ Project** to create your first project, then drag chats from the left list onto it.
 4. Drag cards between columns to set their status. Open a card to add notes and checklist items;

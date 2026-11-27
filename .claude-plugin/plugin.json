@@ -1,6 +1,6 @@
 {
   "name": "session-board",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "A side pane and a full local board for your Claude Code desktop sessions: what waits on you, statuses, projects, notes, checklists, latest messages, tokens, and one-click jump into a session.",
   "types": "./types/index.d.ts",
   "author": {

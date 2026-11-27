@@ -183,7 +183,6 @@ async function pump($: Host) {
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'board', description: 'Open the session board' })
-    void $.ui.open({ id: PANE, title: 'Sessions' })
     void refresh($)
     $.clock.every(12000, () => void reloadMarks($))
     $.clock.every(3000, () => void pump($))
